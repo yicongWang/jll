@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zifisense.jll.dao.ProjectMapperExt">
+     <select id="findProjectInfoList" resultType="com.zifisense.jll.vo.ProjectVo" parameterType="com.zifisense.jll.qo.ProjectQo">
+				 SELECT 
+				  p.id,
+				  p.`name_cn` AS projectNameCn,
+				  p.`name_en` AS projectNameEn,
+				  p.`address`,
+				  p.`floor_area` AS floorArea,
+				  p.`name_model` AS nameModel,
+				  p.`floor_hight` AS floorHight,
+				  p.`bulid_year` AS bulidYear,
+				  p.`catch_time` AS catchTime,
+				  p.`business_type` AS businessType,
+				  p.`city_name` AS cityName,
+				  p.`zip_code` AS zipCode,
+				  a.accountIds,
+				  a.accountNames,
+				  a.accountNameIds,
+				  bg.businessGroupIds,
+				  bg.businessGroupNames,
+				  bg.businessGroupNameIds,
+				  sas.sysIds,
+				  sas.sysNames,
+				  sas.sysNameIds 
+				FROM
+				  `project` p 
+				   <trim>
+				  LEFT JOIN (<include refid="project_account"></include>)as a ON a.id = p.`id`
+				  LEFT JOIN (<include refid="project_business_group"></include>)as bg ON bg.id = p.`id`
+				  LEFT JOIN (<include refid="project_sys_app_source"></include>)as sas ON sas.id = p.`id`
+				 WHERE  p.state = 0
+				 
+				
+					 <if test="keys != null and keys !=''">   
+					  		AND (
+							p.`name_cn` LIKE '%${keys}%'
+							OR p.`name_en` LIKE '%${keys}%'
+							OR a.accountNames LIKE '%${keys}%'
+							 )
+					 </if>
+					 <if test="projectId!= null">
+					  		AND p.`id` = #{projectId}
+					 </if>
+				 </trim>
+ 
+				 
+   </select>
+
+<select id="getProjectList" parameterType="String" resultType="com.zifisense.jll.vo.ShortVo">
+			SELECT 
+			id,
+			IF(`name_model` = 0,IFNULL(name_cn,name_en),IFNULL(name_en,name_cn))AS NAME
+			FROM
+			`project` 
+			WHERE state = 0
+			<if test="keys != null and keys !=''">   
+		   		 AND (name_cn LIKE '%${keys}%' OR name_en LIKE '%${keys}%')
+		    </if>
+</select>
+
+<sql id= "project_business_group">
+		SELECT 
+	    p.`id`, 
+	    GROUP_CONCAT(DISTINCT 
+		IF(bg.`name_model` = 0,IFNULL(CONCAT(bg.`group_name_cn`,":",bg.id),CONCAT(bg.`group_name_en`,":",bg.id)),
+		IFNULL(CONCAT(bg.`group_name_en`,":",bg.id),CONCAT(bg.`group_name_cn`,":",bg.id)))
+		SEPARATOR '|') businessGroupNameIds,
+	     GROUP_CONCAT(DISTINCT 
+	  IF(bg.`name_model` = 0,IFNULL(bg.`group_name_cn`,bg.`group_name_en`),
+	  IFNULL(bg.`group_name_en`,bg.`group_name_cn`))
+	   SEPARATOR '|')AS businessGroupNames,
+	   GROUP_CONCAT(DISTINCT bg.`id` SEPARATOR '|')AS businessGroupIds
+	  FROM
+	  `project` p  
+	   LEFT JOIN `business_group_project` bgp ON bgp.project_id = p.id 
+	   LEFT JOIN `business_group` bg ON bg.`id` = bgp.`business_group_id`
+	  WHERE p.state = 0
+	GROUP BY p.`id`
+</sql>
+
+<sql id= "project_account">
+		SELECT 
+		  p.id,
+		   GROUP_CONCAT(DISTINCT a.id SEPARATOR '|') accountIds,
+		   GROUP_CONCAT(DISTINCT 
+		  IF(a.`name_model` = 0,
+		  IFNULL(a.`user_name_cn`,a.`user_name_en`),
+		  IFNULL(a.`user_name_en`,a.`user_name_cn`))
+		   SEPARATOR '|') accountNames,
+		  GROUP_CONCAT(DISTINCT 
+		  IF(a.`name_model` = 0,
+		  IFNULL(CONCAT(a.`user_name_cn`,":",a.id),CONCAT(a.`user_name_en`,":",a.id)),
+		  IFNULL(CONCAT(a.`user_name_en`,":",a.id),CONCAT(a.`user_name_cn`,":",a.id)))
+		   SEPARATOR '|') accountNameIds
+		FROM
+		  `project` p 
+		  LEFT JOIN `project_account` pa 
+		    ON p.`id` = pa.`project_id` 
+		  LEFT JOIN `account` a 
+		    ON a.`id` = pa.account_id 
+		  WHERE p.state = 0
+		GROUP BY p.id 
+</sql>
+
+<sql id= "project_sys_app_source">
+		SELECT p.`id`,
+		GROUP_CONCAT( DISTINCT sas.`name` SEPARATOR "|") sysNames,
+		GROUP_CONCAT( DISTINCT sas.`id` SEPARATOR "|") sysIds,
+		GROUP_CONCAT( DISTINCT CONCAT(sas.`name`,":",sas.`id`) SEPARATOR "|") sysNameIds
+		 FROM 
+		project p
+		LEFT JOIN project_sys_source pss ON p.`id` = pss.`project_id`
+		LEFT JOIN sys_app_source sas ON sas.`id` = pss.`sys_app_source_id`
+		WHERE p.state = 0
+		GROUP BY p.`id`
+</sql>
+
+
+<select id="sumAllProjectFloorArea" resultType="java.math.BigDecimal">
+			SELECT 
+			SUM(floor_area)
+			FROM
+			`project` 
+			WHERE state = 0
+</select>
+
+</mapper>

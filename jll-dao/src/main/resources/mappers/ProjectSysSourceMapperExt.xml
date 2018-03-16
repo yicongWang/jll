@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zifisense.jll.dao.ProjectSysSourceMapperExt">
+  
+   <select id="getProjectSysCodeList" resultType="com.zifisense.jll.vo.ProjectSysSourceVo" parameterType="Long">
+		SELECT 
+		  sas.`id`,
+		  sas.`code`,
+		  sas.`name`,
+		  pss.`sys_project_code` AS joinCode ,
+		  pss.id AS sysProjectId
+		FROM
+		  `sys_app_source` sas 
+		  LEFT JOIN `project_sys_source` pss ON sas.`id` = pss.`sys_app_source_id`
+		 WHERE sas.`state` = 0
+		  <trim>
+		  <choose>
+		  	<when test="projectId != null">
+		  	 	AND pss.`project_id` = #{projectId}
+		  	</when>
+		  	<otherwise>
+		  	    AND pss.`project_id` = 0
+		  	</otherwise>
+		  </choose>
+		 </trim>
+   </select>
+
+   <select id="getProjectSysCodeInfoByCode" resultType="com.zifisense.jll.vo.ProjectSysSourceInfoVo" parameterType="String">
+		SELECT 
+		  p.`id` AS projectId,
+		  IF(
+		    p.`name_model` = 0,
+		    p.`name_cn`,
+		    p.`name_en`
+		  ) projectName,
+		  sas.`id` AS appSourceId,
+		  sas.`code` AS appSourceCode,
+		  sas.`name` AS appSourceName,
+		  p.`address` AS deviceAddress,
+		  pss.sys_project_code AS sysProjectCode
+		  FROM
+		  project_sys_source pss 
+		  LEFT JOIN project p 
+		    ON p.`id` = pss.`project_id` 
+		  LEFT JOIN sys_app_source sas 
+		    ON sas.`id` = pss.`sys_app_source_id` 
+		WHERE pss.`sys_project_code` = #{sysProjectCode}
+   </select>
+
+</mapper>

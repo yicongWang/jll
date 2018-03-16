@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zifisense.jll.dao.MenuRoleMapperExt">
+ <select id="queryMuneByRoleId"  resultType="com.zifisense.jll.dto.MenuRoleDTO" parameterType="long">
+	 select 
+	  sma.`role_id`,
+	  sm.*
+	from sys_menu_role sma 
+	  left join `sys_menu` sm on sma.`menu_id` = sm.`id`
+	  where sma.`role_id`  = #{roleId}
+	   and
+	      sm.state = 'normal'
+	      and sm.menu_type = '0'
+	      ORDER BY
+		sm.parent_id,
+	sm.sort_number
+ </select>
+</mapper>

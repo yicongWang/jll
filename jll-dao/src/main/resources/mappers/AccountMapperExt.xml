@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zifisense.jll.dao.AccountMapperExt">
+	
+	<select id="findAccountInfoList" resultType="com.zifisense.jll.vo.AccountDetailVo" parameterType="com.zifisense.jll.qo.AccountQo">
+	
+			SELECT 
+				a.`account`,
+				a.`email`,
+				a.`mobile_phone` AS mobilePhone,
+				a.`user_position` AS userPosition,
+				a.`user_name_cn` AS userNameCn,
+				a.`user_name_en`  AS userNameEn,
+				a.id,
+				proj.projectNameIds,
+				proj.projectNames,
+				bus.businessGroupNameIds,
+			        bus.businessGroupNames,
+				role.role_name AS roleName,
+				role.identity AS roleIdentity
+				FROM 
+				`account` a 
+				
+				LEFT JOIN (
+				SELECT ar.`account_id`,sr.`role_name`,sr.`identity` FROM
+				`account_role` ar,`sys_role` sr
+				WHERE 
+				 ar.`role_id` =sr.`id`
+				) role 
+				ON role.`account_id` = a.`id`
+				
+				LEFT JOIN 
+				(    
+				        SELECT a.id AS accountId,
+				        
+					  GROUP_CONCAT(DISTINCT 
+					  IF(p.`name_model` = 0,IFNULL(CONCAT(p.`name_cn`,":",p.id),CONCAT(p.`name_en`,":",p.id)),
+					  IFNULL(CONCAT(p.`name_en`,":",p.id),CONCAT(p.`name_cn`,":",p.id)))
+					   SEPARATOR '|') projectNameIds,
+					 GROUP_CONCAT(DISTINCT IF(p.`name_model` = 0,IFNULL(p.`name_cn`,p.`name_en`),IFNULL(p.`name_en`,p.`name_cn`))SEPARATOR '|') projectNames
+				       
+					FROM 
+					account a,`project_account` pa,project p 
+					WHERE  a.id = pa.`account_id` AND pa.`project_id` = p.`id`
+					GROUP BY a.id
+					
+				)proj
+				ON a.`id` =proj.accountId
+				LEFT JOIN 
+				(
+				      SELECT a.id AS accountId,
+				      
+					 GROUP_CONCAT(DISTINCT 
+					  IF(bg.`name_model` = 0,IFNULL(CONCAT(bg.`group_name_cn`,":",bg.id),CONCAT(bg.`group_name_en`,":",bg.id)),
+					  IFNULL(CONCAT(bg.`group_name_en`,":",bg.id),CONCAT(bg.`group_name_cn`,":",bg.id)))
+					   SEPARATOR '|') businessGroupNameIds,
+					
+					GROUP_CONCAT(DISTINCT 
+					  IF(bg.`name_model` = 0,IFNULL(bg.`group_name_cn`,bg.`group_name_en`),
+					  IFNULL(bg.`group_name_en`,bg.`group_name_cn`))
+					   SEPARATOR '|')AS businessGroupNames
+			
+					
+					FROM 
+					account a,`business_group_account` bga,business_group bg 
+					WHERE  a.id = bga.`account_id` AND bga.`business_group_id` = bg.`id`
+					GROUP BY a.id
+				)bus
+				ON a.`id` =bus.accountId
+				WHERE a.`state` = 0
+			<trim>
+            <if test="keys!=null and keys!=''">
+              AND(
+					a.`user_name_cn` LIKE '%${keys}%' 
+					OR a.`user_name_en` LIKE '%${keys}%' 
+					OR proj.`projectNames` LIKE '%${keys}%'  
+					OR bus.`businessGroupNames` LIKE '%${keys}%'
+				)
+            </if>
+            
+            <if test="accountId!=null and accountId!=''">
+            	 and a.`id` =${accountId}
+            </if>
+            
+            
+        </trim>
+	</select>
+	
+	<select id="getShortAcountList" resultType="com.zifisense.jll.vo.AccountShortVo" parameterType="String">
+			  SELECT 
+				 a.id,
+				a.account AS code,
+				IF(a.`name_model` = 0,IFNULL(a.user_name_cn,a.user_name_en),IFNULL(a.user_name_en,a.user_name_cn))AS name,
+				a.mobile_phone AS mobilePhone,
+				a.email 
+				FROM
+				`account` a 
+				LEFT JOIN `account_role`ar ON ar.`account_id` =a.`id`
+				LEFT JOIN `sys_role`sr ON sr.`id` = ar.`role_id`
+				WHERE a.`state` =0
+				<trim >
+				 	<if test="identity!=null and identity!=''">
+				 		and sr.`identity` = #{identity}
+				 	</if>
+				 	 <if test="keys!=null and keys!=''">
+					 AND(
+						a.`user_name_cn` LIKE '%${keys}%' 
+						OR a.`user_name_en` LIKE '%${keys}%' 
+						OR a.`mobile_phone`  LIKE '%${keys}%' 
+						OR a.`account`   LIKE '%${keys}%' 
+				    	)
+				 	 </if>
+				</trim>
+</select>
+
+<select id="getProjectAcountAble" resultType="com.zifisense.jll.vo.AccountShortVo">
+			 SELECT 
+				 a.id,
+				a.account AS code,
+				IF(a.`name_model` = 0,IFNULL(a.user_name_cn,a.user_name_en),IFNULL(a.user_name_en,a.user_name_cn))AS name,
+				a.mobile_phone AS mobilePhone,
+				a.email 
+				FROM
+				`account` a 
+				LEFT JOIN `account_role` ar ON a.`id` = ar.`account_id`
+				LEFT JOIN `sys_role` sr ON sr.`id` = ar.`role_id`
+			LEFT JOIN
+			(SELECT COUNT(1) num,pa.`account_id` FROM `project_account` pa
+			LEFT JOIN `project` p ON p.`id` = pa.`project_id`
+			WHERE p.`state` = 0
+			GROUP BY account_id)temp ON a.`id` = temp.account_id
+			WHERE sr.`identity` = 'level-three' AND a.`state` = 0 AND (temp.num &lt; 3 OR temp.num IS NULL)
+</select>
+
+
+	
+	
+	
+</mapper>

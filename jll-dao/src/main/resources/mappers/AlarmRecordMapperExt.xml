@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zifisense.jll.dao.AlarmRecordMapperExt">
+  
+   <select id="getAlarmListByQuery" resultType="com.zifisense.jll.vo.AlarmVo" parameterType="com.zifisense.jll.qo.AlarmQo">
+		 select 
+		    <include refid="showListColumn"></include>
+		      ,p.`floor_area` as floorArea
+			  from alarm_record ar  
+	  		 LEFT JOIN project p ON p.`id` = ar.`project_id`
+ 		<trim prefix="where" prefixOverrides="and |or">
+            
+             <if test="dataType!=null">
+                 and ar.data_type = #{dataType}
+                  <if test="dataType == 0">
+                    	 <if test="alarmState!=null">
+              					 and ar.alarm_state = #{alarmState}
+           				 </if>
+                  </if>
+            </if>
+            
+            
+            <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+          
+            <if test="projectId!=null">
+                and ar.project_id = #{projectId}
+            </if>
+             <if test="startYm != null"> AND  ar.alarm_ym &gt;= #{startYm}</if>
+			 <if test="endYm != null"> AND  ar.alarm_ym &lt;= #{endYm}</if> 
+        </trim>
+   </select>
+   
+   <sql id="showListColumn">
+   		    ar.`id`AS id,
+		    ar.`project_id`AS projectId,
+		    ar.`project_name` AS projectName,
+		    ar.`app_source_code` AS appSourceCode,
+		    ar.`app_source_name` AS appSourceName,
+		    ar.`device_type` AS deviceType,
+		    ar.`device_address` AS deviceAddress,
+		    ar.`alarm_type` AS alarmType,
+		    ar.`alarm_state` AS alarmState,
+		    ar.`alarm_content` AS alarmContent,
+		    ar.`alarm_time` AS alarmTime,
+		    ar. data_type  AS dataType,
+		    ar. modify_time  AS finishTime
+   </sql>
+   
+      <select id="countAlarmReportAOne" resultType="com.zifisense.jll.vo.ReportAVo" parameterType="com.zifisense.jll.qo.AlarmQo">
+		  SELECT 
+			  COUNT(ar.id)as countNum,ar.alarm_ym as alarmYm
+			FROM
+			  alarm_record ar
+ 		<trim prefix="where" prefixOverrides="and |or">
+ 		
+ 			 <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+         
+            <if test="projectId!=null">
+                and ar.project_id = #{projectId}
+            </if>
+             <if test="startYm != null"> 
+                AND  ar.alarm_ym &gt;= #{startYm}
+             </if>
+			 <if test="endYm != null">
+			   AND  ar.alarm_ym &lt;= #{endYm}
+			   </if> 
+        </trim>
+        GROUP BY alarm_ym,alarm_year,alarm_month 
+   </select>
+   
+   
+      <select id="countAlarmReportATwo" resultType="com.zifisense.jll.vo.ReportA2Vo" parameterType="com.zifisense.jll.qo.AlarmQo">
+		  SELECT 
+			   COUNT(*)as countNum,ar.alarm_ym as alarmYm,p.floor_area AS floorArea
+			FROM
+			  alarm_record ar
+			 LEFT JOIN project p ON ar.`project_id` = p.`id`
+ 		<trim prefix="where" prefixOverrides="and |or">
+ 		
+ 			 <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+         
+            <if test="projectId!=null">
+                and ar.project_id = #{projectId}
+            </if>
+             <if test="startYm != null"> 
+                AND  ar.alarm_ym &gt;= #{startYm}
+             </if>
+			 <if test="endYm != null">
+			   AND  ar.alarm_ym &lt;= #{endYm}
+			   </if> 
+        </trim>
+        GROUP BY alarm_ym,ar.project_id,p.floor_area 
+   </select>
+   
+    <select id="getAlarmListBySimpleProject" resultType="com.zifisense.jll.vo.AlarmVo" parameterType="com.zifisense.jll.qo.AlarmQo">
+		  SELECT 
+			  <include refid="showListColumn"></include>
+			FROM
+			  alarm_record ar
+			   
+ 		<trim prefix="where" prefixOverrides="and |or">
+ 			
+ 			<if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+ 		
+           <!--  <if test="appSourceCode!=null">
+               and ar.app_source_code = #{appSourceCode}
+            </if> -->
+            <!-- <if test="alarmType!=null">
+                and ar.alarm_type = #{alarmType}
+            </if> -->
+            <if test="projectId!=null">
+                and ar.project_id = #{projectId}
+            </if>
+             <if test="startYm != null"> 
+                AND  ar.alarm_ym &gt;= #{startYm}
+             </if>
+			 <if test="endYm != null">
+			    AND  ar.alarm_ym &lt;= #{endYm}
+			  </if> 
+			  
+			  <if test="searchYm != null">
+			    AND  ar.alarm_ym = #{searchYm}
+			  </if> 
+			  
+        </trim>
+   </select>
+   
+   
+   <select id="countAlarmReportBOne" resultType="com.zifisense.jll.vo.ReportBVo" parameterType="com.zifisense.jll.qo.ReportBQo">
+		 	SELECT 
+			  project_id as projectId,
+			  project_name as projectName,
+			  COUNT(ar.id) AS countNum 
+			FROM
+			  alarm_record ar 
+ 		<trim prefix="where" prefixOverrides="and |or">
+ 		
+ 			 <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+        <!--  <if test="alarmType!=null">
+                and ar.alarm_type = #{alarmType}
+            </if> -->
+             <if test="projectIdArray!=null">
+                  and ar.project_id in
+			 	<foreach collection="projectIdArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+            
+             <if test="startYm != null"> 
+                AND  ar.alarm_ym &gt;= #{startYm}
+             </if>
+			 <if test="endYm != null">
+			   AND  ar.alarm_ym &lt;= #{endYm}
+			   </if> 
+        </trim>
+       	GROUP BY project_id, project_name 
+   </select>
+   
+   
+      <select id="countAlarmReportBTwo" resultType="com.zifisense.jll.vo.ReportB2Vo" parameterType="com.zifisense.jll.qo.ReportBQo">
+		 	SELECT 
+			  project_id as projectId
+			  ,IF(p.`name_model` = 0,IFNULL(p.`name_cn`, p.`name_en`),IFNULL(p.`name_en`, p.`name_cn`))  AS projectName
+			  ,COUNT(ar.id) AS countNum 
+			  ,p.floor_area AS floorArea
+			FROM
+			  alarm_record ar 
+			  LEFT JOIN project p ON ar.`project_id` = p.`id`
+ 		<trim prefix="where" prefixOverrides="and |or">
+ 		
+ 			 <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+        <!--  <if test="alarmType!=null">
+                and ar.alarm_type = #{alarmType}
+               </if> -->
+             <if test="projectIdArray!=null">
+                  and ar.project_id in
+			 	<foreach collection="projectIdArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+            
+             <if test="startYm != null"> 
+                AND  ar.alarm_ym &gt;= #{startYm}
+             </if>
+			 <if test="endYm != null">
+			   AND  ar.alarm_ym &lt;= #{endYm}
+			   </if> 
+        </trim>
+       	GROUP BY project_id
+   </select>
+   
+   
+   
+    <select id="countAlarmReportBThree" resultType="com.zifisense.jll.vo.ReportAVo" parameterType="com.zifisense.jll.qo.ReportBQo">
+		  SELECT 
+			  COUNT(ar.id)as countNum,ar.alarm_ym as alarmYm
+			FROM
+			  alarm_record ar
+ 		<trim prefix="where" prefixOverrides="and |or">
+ 		
+ 			 <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+ 			
+            <!-- <if test="alarmType!=null">
+                and ar.alarm_type = #{alarmType}
+            </if> -->
+             <if test="projectIdArray!=null">
+                  and ar.project_id in
+			 	<foreach collection="projectIdArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+             <if test="startYm != null"> 
+                AND  ar.alarm_ym &gt;= #{startYm}
+             </if>
+			 <if test="endYm != null">
+			   AND  ar.alarm_ym &lt;= #{endYm}
+			   </if> 
+        </trim>
+        GROUP BY alarm_ym,alarm_year,alarm_month 
+   </select>
+   
+   
+       <select id="countAlarmReportCOne" resultType="com.zifisense.jll.vo.ReportCVo" parameterType="com.zifisense.jll.qo.ReportCQo">
+			SELECT 
+			   alarm_ym as alarmYm,
+			   COUNT(1) AS countNum ,
+			   p.`business_group_id` as groupId,
+			   IF(bg.`name_model`=0,bg.`group_name_cn`,bg.`group_name_en`)groupName
+			FROM
+			  alarm_record ar 
+			  LEFT JOIN business_group_project p ON p.`project_id` = ar.`project_id`
+			  LEFT JOIN business_group bg ON bg.`id` = p.`business_group_id`
+			 WHERE bg.`id` IS NOT NULL
+ 		<trim >
+ 		
+ 			 <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+ 			
+            <!-- <if test="alarmType!=null">
+                and ar.alarm_type = #{alarmType}
+            </if> -->
+             <if test="startYm != null"> 
+                AND  ar.alarm_ym &gt;= #{startYm}
+             </if>
+			 <if test="endYm != null">
+			   AND  ar.alarm_ym &lt;= #{endYm}
+			   </if> 
+        </trim>
+          GROUP BY alarm_ym,p.`business_group_id`
+   </select>
+   
+   
+   <select id="countAlarmReportCTwo" resultType="com.zifisense.jll.vo.ReportC2Vo" parameterType="com.zifisense.jll.qo.ReportCQo">
+			SELECT 
+			   alarm_ym as alarmYm,
+			   COUNT(1) AS countNum ,
+			   p.`business_group_id` as groupId,
+			   IF(bg.`name_model`=0,bg.`group_name_cn`,bg.`group_name_en`)groupName,
+			   temp.floor_area AS floorArea
+			FROM
+			  alarm_record ar 
+			  LEFT JOIN business_group_project p ON p.`project_id` = ar.`project_id`
+			  LEFT JOIN business_group bg ON bg.`id` = p.`business_group_id`
+			  
+			  LEFT JOIN (SELECT business_group_id,SUM(p.`floor_area`)AS floor_area FROM 
+				business_group_project bgp
+				LEFT JOIN 
+				project p ON bgp.`project_id` = p.`id`
+				GROUP BY bgp.`business_group_id`) temp	  
+			  ON temp.business_group_id = p.`business_group_id`
+			  
+			 WHERE bg.`id` IS NOT NULL
+ 		<trim >
+ 		
+ 			 <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+ 			
+            <!-- <if test="alarmType!=null">
+                and ar.alarm_type = #{alarmType}
+            </if> -->
+             <if test="startYm != null"> 
+                AND  ar.alarm_ym &gt;= #{startYm}
+             </if>
+			 <if test="endYm != null">
+			   AND  ar.alarm_ym &lt;= #{endYm}
+			   </if> 
+        </trim>
+          GROUP BY alarm_ym,p.`business_group_id`
+   </select>
+   
+   
+   
+    <select id="countAlarmReportCThree" resultType="com.zifisense.jll.vo.ReportCVo" parameterType="com.zifisense.jll.qo.ReportCQo">
+			   SELECT 
+				   COUNT(1) AS countNum ,
+				   p.`business_group_id` as groupId,
+				   IF(bg.`name_model`=0,bg.`group_name_cn`,bg.`group_name_en`)groupName
+				FROM
+				  alarm_record ar 
+				  LEFT JOIN business_group_project p ON p.`project_id` = ar.`project_id`
+				  LEFT JOIN business_group bg ON bg.`id` = p.`business_group_id`
+				 WHERE bg.`id` IS NOT NULL
+ 		<trim >
+ 		
+ 			 <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+ 			
+            <!-- <if test="alarmType!=null">
+                and ar.alarm_type = #{alarmType}
+            </if> -->
+             <if test="startYm != null"> 
+                AND  ar.alarm_ym &gt;= #{startYm}
+             </if>
+			 <if test="endYm != null">
+			   AND  ar.alarm_ym &lt;= #{endYm}
+			   </if> 
+        </trim>
+            GROUP BY p.`business_group_id`
+   </select>
+   
+   
+      <select id="findAlarmListByReportA" resultType="com.zifisense.jll.vo.AlarmVo" parameterType="com.zifisense.jll.qo.ReportAListQo">
+		 	SELECT 
+			 <include refid="showListColumn"></include>
+			 ,p.`floor_area` as floorArea
+			FROM
+			  alarm_record ar 
+			 LEFT JOIN project p ON p.`id` = ar.`project_id`
+ 		<trim prefix="where" prefixOverrides="and |or">
+ 		
+ 			 <if test="appSourceCodeArray!=null">
+                  and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if>
+              <if test="projectId!=null">
+                and ar.project_id = #{projectId}
+            </if>
+            <!--  <if test="projectIdArray!=null">
+                  and ar.project_id in
+			 	<foreach collection="projectIdArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+             </if> -->
+			 <if test="searchYm != null">
+			   AND  ar.alarm_ym = #{searchYm}
+			  </if> 
+        </trim>
+   </select>
+   
+  <select id="findAlarmListByReportB" resultType="com.zifisense.jll.vo.AlarmVo" parameterType="com.zifisense.jll.qo.ReportBListQo">
+		 	SELECT 
+			 <include refid="showListColumn"></include>
+			  ,p.`floor_area` as floorArea
+			FROM
+			  alarm_record ar 
+			  LEFT JOIN project p ON p.`id` = ar.`project_id`
+			<trim prefix="where" prefixOverrides="and |or">
+			
+				 <if test="appSourceCodeArray!=null">
+		                and ar.app_source_code in
+			 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			    </foreach>
+		           </if>
+		         <if test="projectIdArray!=null">
+                  and ar.project_id in
+			 		<foreach collection="projectIdArray" index="index" item="item" open="(" separator="," close=")">  
+			        #{item}  
+			   	 </foreach>
+             	</if> 
+		          
+	           <if test="startYm != null"> 
+	              AND  ar.alarm_ym &gt;= #{startYm}
+	           </if>
+			   <if test="endYm != null">
+			     AND  ar.alarm_ym &lt;= #{endYm}
+			   </if>
+			   
+			    <if test="searchYm != null">
+			   		AND  ar.alarm_ym = #{searchYm}
+			   </if> 
+		      </trim>
+ </select>
+   
+  <select id="findAlarmListByReportC" resultType="com.zifisense.jll.vo.AlarmVo" parameterType="com.zifisense.jll.qo.ReportCListQo">
+			  SELECT 
+			    <include refid="showListColumn"></include>
+			    	 ,bgp.`business_group_id` AS groupId
+			   		 ,IF(bg.`name_model`=0,bg.`group_name_cn`,bg.`group_name_en`)groupName
+			         ,p.`floor_area` as floorArea
+				FROM
+				  alarm_record ar 
+				   LEFT JOIN business_group_project bgp ON bgp.`project_id` = ar.`project_id` 
+	 			   LEFT JOIN business_group bg ON bg.`id` = bgp.`business_group_id` 
+	  			   LEFT JOIN project p ON p.`id` = ar.`project_id`
+				 WHERE bg.`id` IS NOT NULL
+		 		<trim >
+		 			 <if test="appSourceCodeArray!=null">
+		                  and ar.app_source_code in
+					 	<foreach collection="appSourceCodeArray" index="index" item="item" open="(" separator="," close=")">  
+					        #{item}  
+					    </foreach>
+		             </if>
+		 			
+		 			 <if test="groupId!=null">
+		                and bg.`id` = #{groupId}
+		            </if>
+		 			
+		            <if test="searchYm != null">
+			   		  AND  ar.alarm_ym = #{searchYm}
+			   		</if> 
+		             <if test="startYm != null"> 
+		                AND  ar.alarm_ym &gt;= #{startYm}
+		             </if>
+					 <if test="endYm != null">
+					   AND  ar.alarm_ym &lt;= #{endYm}
+					   </if> 
+		        </trim>
+ </select>
+ 
+ 
+ 
+
+</mapper>

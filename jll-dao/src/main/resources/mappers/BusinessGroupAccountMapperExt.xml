@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zifisense.jll.dao.BusinessGroupAccountMapperExt">
+	
+	
+	   <select id="getBusinessGroupAcountList" resultType="com.zifisense.jll.vo.AccountShortVo" parameterType="Long">
+     			SELECT a.id,
+						a.account AS code,
+						IF(a.`name_model` = 0,IFNULL(a.user_name_cn,a.user_name_en),IFNULL(a.user_name_en,a.user_name_cn))AS NAME,
+						a.mobile_phone AS mobilePhone,
+						a.email  
+				FROM `business_group_project` bgp
+				LEFT JOIN `business_group_account` bga ON bgp.`business_group_id`= bga.`business_group_id`
+				LEFT JOIN `account` a ON a.`id` = bga.`account_id`
+				WHERE bgp.`project_id` = #{projectId} AND a.`state` = 0 
+     </select>
+
+
+</mapper>

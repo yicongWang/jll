@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zifisense.jll.dao.BusinessGroupMapperExt">
+  
+   <select id="findBusinessGroupInfoList" resultType="com.zifisense.jll.vo.BusinessGroupVo" parameterType="com.zifisense.jll.qo.BusinessGroupQo">
+		  SELECT bga.id,groupName,groupCode,accountNameIds,accountNames,projectNameIds,projectNames FROM
+				(SELECT 
+				   IFNULL(bg.group_name_cn, bg.group_name_en) AS groupName,
+				  bg.group_code AS groupCode,
+				  bg.id,
+				  bg.`name_model` AS nameModel,
+				  GROUP_CONCAT(DISTINCT 
+				  IF(a.`name_model` = 0,
+				  IFNULL(CONCAT(a.`user_name_cn`,":",a.id),CONCAT(a.`user_name_en`,":",a.id)),
+				  IFNULL(CONCAT(a.`user_name_en`,":",a.id),CONCAT(a.`user_name_cn`,":",a.id)))
+				   SEPARATOR '|') accountNameIds,
+				   GROUP_CONCAT( DISTINCT IF(
+			        a.`name_model` = 0,
+			        IFNULL(a.`user_name_cn`, a.`user_name_en`),
+			        IFNULL(a.`user_name_en`, a.`user_name_cn`)
+			      ) SEPARATOR '|') accountNames
+				FROM
+				  `business_group` bg 
+				  LEFT JOIN `business_group_account` bga 
+				    ON bg.`id` = bga.`business_group_id` 
+				  LEFT JOIN `account` a 
+				    ON a.`id` = bga.account_id 
+				  WHERE bg.state = 0
+				GROUP BY bg.id,bg.group_code,bg.group_name_cn, bg.group_name_en,bg.`name_model` ) bga
+				  LEFT JOIN
+				  
+				  (SELECT 
+				    bg.`id`, 
+				    GROUP_CONCAT(DISTINCT 
+				  IF(p.`name_model` = 0,
+				  IFNULL(CONCAT(p.`name_cn`,":",p.id),CONCAT(p.`name_en`,":",p.id)),
+				  IFNULL(CONCAT(p.`name_en`,":",p.id),CONCAT(p.`name_cn`,":",p.id)))
+				   SEPARATOR '|') projectNameIds
+			      ,GROUP_CONCAT( DISTINCT IF(
+			        p.`name_model` = 0,
+			        IFNULL(p.`name_cn`, p.`name_en`),
+			        IFNULL(p.`name_en`, p.`name_cn`)
+			      ) SEPARATOR '|') projectNames
+				  FROM
+				   `business_group` bg 
+				  LEFT JOIN `business_group_project` bgp ON bgp.`business_group_id` = bg.id 
+				  LEFT JOIN  `project` p  ON p.`id` = bgp.`project_id`
+				  WHERE bg.state = 0
+				 GROUP BY bg.`id`)bgp
+				
+				  ON bga.id = bgp.id
+				  
+		 <trim prefix="where" prefixOverrides="and |or">
+            <if test="bussiessGroupId != null">
+                and bga.id = #{bussiessGroupId}
+            </if>
+             <if test="keys != null and keys !=''">   
+					  		AND groupName LIKE '%${keys}%'
+			 </if>
+        </trim>
+   </select>
+
+<select id="getShortBussiessGroupList" resultType="com.zifisense.jll.vo.ShortVo">
+			SELECT 
+			id,
+			IF(`name_model` = 0,IFNULL(group_name_cn,group_name_en),IFNULL(group_name_en,group_name_cn))AS name
+			FROM
+			`business_group` 
+			WHERE state = 0
+			  <if test="keys != null and keys !=''">   
+					  		 AND group_name_cn LIKE '%${keys}%'
+			 </if>
+			
+</select>
+
+
+
+</mapper>

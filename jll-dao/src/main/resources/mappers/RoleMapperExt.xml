@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zifisense.jll.dao.RoleMapperExt">
+
+
+  <resultMap id="BaseResultDTOMap" type="com.zifisense.jll.dto.RoleDTO" extends="com.zifisense.jll.dao.RoleMapper.BaseResultMap">
+
+      <result column="application_id" jdbcType="BIGINT" property="applicationId" />
+  </resultMap>
+
+  <!-- 获取最大的排序号 -->
+  <select id="getMaxSort" resultType="int">
+    SELECT
+    IFNULL(max(sort_number),0)
+    FROM
+    `sys_role`
+    WHERE
+    state = 'normal'
+  </select>
+
+
+  <!-- 获取系统所有的角色集合-->
+  <select id="findRoleDTOList" resultMap="BaseResultDTOMap">
+    SELECT
+        r.id,
+        r.role_name,
+        r.identity
+    FROM
+        sys_role r
+    WHERE
+        r.state = 'normal'
+    ORDER BY
+        r.sort_number
+
+  </select>
+
+
+    <!-- 获取最大的角色对象信息 （非超管用户）-->
+    <select id="getMaxRoleDTO" resultMap="BaseResultDTOMap">
+        SELECT DISTINCT
+            r.id,
+            r.identity,
+            r.role_name,
+            r.sort_number
+        FROM
+            sys_account_role ar
+        LEFT JOIN sys_role r ON r.id = ar.role_id
+        WHERE
+            ar.account_id = #{accountId}
+        ORDER BY
+            r.sort_number
+        LIMIT 1
+    </select>
+
+
+
+    <!--根据用户id 查询角色集合(非超管用户)-->
+    <select id="findRoleList" resultMap="BaseResultDTOMap">
+        SELECT
+            r.id,
+            r.role_name,
+            r.identity,
+            ar.application_id
+        FROM
+            sys_role r
+        JOIN sys_account_role ar ON ar.role_id = r.id
+        WHERE
+            r.state = 'normal'
+        AND ar.account_id = #{accountId}
+        ORDER BY
+	      r.sort_number
+    </select>
+
+</mapper>
